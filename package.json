@@ -1,0 +1,21 @@
+{
+    "name": "d3stockpricecorrelation",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 0",
+        "start": "http-server"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/vprecup/d3stockpricecorrelation.git"
+    },
+    "homepage": "https://github.com/vprecup/d3stockpricecorrelation#readme",
+    "dependencies": {
+        "d3": "^5.1.0"
+    },
+    "devDependencies": {
+        "http-server": "^0.9.0"
+    }
+}
