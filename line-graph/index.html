@@ -72,6 +72,18 @@
             .attr("text-anchor", "end")
             .text("Price ($)");
 
+        function dragStarted() {
+            var cursor = d3.select(this).classed('dragging', true);
+            d3.event.on('drag', dragged).on('end', ended);
+
+            function dragged(d) {
+                cursor.raise().attr('x', d3.event.x);
+            }
+
+            function ended(d) {
+                cursor.classed('dragging', false);
+            }
+        }
         dataCanvas = g.append("g");
         
         dataCanvas.append('rect')
@@ -79,7 +91,8 @@
             .attr('y', 0)
             .attr('width', cursorWidth)
             .attr('height', height)
-            .attr('fill', 'url(#cursorGradient)');
+            .attr('fill', 'url(#cursorGradient)')
+            .call(d3.drag().on('start', dragStarted));
 
         dataCanvas.append("path")
             .datum(data)
