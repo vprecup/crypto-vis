@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<svg width="960" height="500"></svg>
+<svg width="960" height="600"></svg>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
 
     var svg = d3.select("svg"),
 
-        cursorWidth = 15,
-        margin = {top: 20, right: 20, bottom: 30, left: 50},
+        cursorWidth = 16,
+        margin = {top: 20, right: 20, bottom: 130, left: 50},
         width = +svg.attr("width") - margin.left - margin.right,
         height = +svg.attr("height") - margin.top - margin.bottom,
         g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -16,6 +16,11 @@
     var x = d3.scaleTime().rangeRound([0, width]);
 
     var y = d3.scaleLinear().rangeRound([height, 0]);
+
+    var boundText = svg.append('text')
+        .attr('y', height + margin.top + margin.bottom - 20)
+        .attr('x', margin.left)
+        .text('Sample');
 
     var cursorGradient = svg.append('linearGradient')
         .attr('x1', 0)
@@ -71,13 +76,20 @@
             .attr("dy", "0.71em")
             .attr("text-anchor", "end")
             .text("Price ($)");
+        
+        var inverseX = d3.scaleLinear().domain([0, width]).rangeRound([0, data.length]);
+
+        function updatePrice(index) {
+            boundText.raise().text('Current price ($): ' + data[inverseX(index)].price);
+        }
 
         function dragStarted() {
             var cursor = d3.select(this).classed('dragging', true);
             d3.event.on('drag', dragged).on('end', ended);
 
             function dragged(d) {
-                cursor.raise().attr('x', d3.event.x);
+                cursor.raise().attr('x', d3.event.x - cursorWidth / 2);
+                updatePrice(d3.event.x);
             }
 
             function ended(d) {
@@ -101,7 +113,8 @@
             .attr("stroke-linejoin", "round")
             .attr("stroke-linecap", "round")
             .attr("stroke-width", 1.5)
-            .attr("d", line);
+            .attr("d", line)
+            .on('loaded', updatePrice(data.length / 2));
     });
 
 </script>
