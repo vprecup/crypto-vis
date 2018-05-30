@@ -1,5 +1,5 @@
-# d3stockpricecorrelation
-A D3 visualization of the most significant correlation between stock prices of companies.
+# crypto-vis
+A D3 visualization of the dynamic evolution of the market orders for the Bitcoin crpytocurrency.
 
 ## Running the project
 1. Install NPM and ensure it is in your PATH.

@@ -4,6 +4,8 @@
 <script>
 
     var svg = d3.select("svg"),
+
+        cursorWidth = 15,
         margin = {top: 20, right: 20, bottom: 30, left: 50},
         width = +svg.attr("width") - margin.left - margin.right,
         height = +svg.attr("height") - margin.top - margin.bottom,
@@ -14,6 +16,23 @@
     var x = d3.scaleTime().rangeRound([0, width]);
 
     var y = d3.scaleLinear().rangeRound([height, 0]);
+
+    var cursorGradient = svg.append('linearGradient')
+        .attr('x1', 0)
+        .attr('x2', 1)
+        .attr('y1', 0)
+        .attr('y2', 0)
+        .attr('id', 'cursorGradient');
+    cursorGradient.append('stop')
+        .attr('offset', 0)
+        .attr('stop-opacity', 0);
+    cursorGradient.append('stop')
+        .attr('offset', 0.5)
+        .attr('stop-color', '#ff0000')
+        .attr('stop-opacity', 0.5);
+    cursorGradient.append('stop')
+        .attr('offset', 1)
+        .attr('stop-opacity', 0);
 
     var line = d3.line()
         .x(function (d) {
@@ -53,7 +72,16 @@
             .attr("text-anchor", "end")
             .text("Price ($)");
 
-        g.append("path")
+        dataCanvas = g.append("g");
+        
+        dataCanvas.append('rect')
+            .attr('x', (width - cursorWidth) / 2)
+            .attr('y', 0)
+            .attr('width', cursorWidth)
+            .attr('height', height)
+            .attr('fill', 'url(#cursorGradient)');
+
+        dataCanvas.append("path")
             .datum(data)
             .attr("fill", "none")
             .attr("stroke", "steelblue")
