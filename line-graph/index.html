@@ -33,7 +33,7 @@
         .attr('stop-opacity', 0);
     cursorGradient.append('stop')
         .attr('offset', 0.5)
-        .attr('stop-color', '#ff0000')
+        .attr('stop-color', '#0000ff')
         .attr('stop-opacity', 0.5);
     cursorGradient.append('stop')
         .attr('offset', 1)
@@ -83,29 +83,37 @@
             boundText.raise().text('Current price ($): ' + data[inverseX(index)].price);
         }
 
-        function dragStarted() {
+        function dragCursor() {
             var cursor = d3.select(this).classed('dragging', true);
-            d3.event.on('drag', dragged).on('end', ended);
-
-            function dragged(d) {
-                cursor.raise().attr('x', d3.event.x - cursorWidth / 2);
-                updatePrice(d3.event.x);
-            }
-
-            function ended(d) {
-                cursor.classed('dragging', false);
-            }
+            var newValue = +cursor.attr('x') + d3.event.dx;
+            cursor.attr('x', newValue);
+            d3.select('#cursorLine').attr('x', newValue + cursorWidth / 2 - 1);
+            updatePrice(d3.event.x);
         }
         dataCanvas = g.append("g");
-        
-        dataCanvas.append('rect')
+
+        // Current time selection cursor
+        var cursor = dataCanvas.append('g');
+        cursor.append('rect')
+            .attr('x', width / 2)
+            .attr('y', 0)
+            .attr('width', 2)
+            .attr('height', height)
+            .attr('id', 'cursorLine')
+            .style('fill', 'red')
+            .style('opacity', 1);
+        cursor.append('rect')
             .attr('x', (width - cursorWidth) / 2)
             .attr('y', 0)
             .attr('width', cursorWidth)
             .attr('height', height)
             .attr('fill', 'url(#cursorGradient)')
-            .call(d3.drag().on('start', dragStarted));
+            .attr('opacity', 0)
+            .on('mouseover', function(d, i) { d3.select(this).attr('opacity', 0.3); })
+            .on('mouseout', function(d, i) { d3.select(this).attr('opacity', 0); })
+            .call(d3.drag().on('drag', dragCursor));
 
+        // Price line graph / Path 
         dataCanvas.append("path")
             .datum(data)
             .attr("fill", "none")
