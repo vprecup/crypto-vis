@@ -4,6 +4,12 @@
     <title>cryptovis</title>
     <style>
         svg { display: inline-block}
+        #line {
+            outline: 1px solid red;
+        }
+        #book {
+            outline: 1px solid blue;
+        }
     </style>
 </head>
 <body>
@@ -24,6 +30,11 @@
         .await(analyze);
 
     var extent = {};
+    var numOrderBookSamples;
+    var bookData;
+    var bookCanvas;
+    var maxTotal;
+
     function analyze(error, trades, book) {
         if(error) { console.log(error); }
 
@@ -31,7 +42,11 @@
         console.log("book", book);
 
         extent = book.extent;
-        orderBook(book.book[100]);
+        numOrderBookSamples = book.book.length;
+        bookData = book.book;
+        maxTotal = book.maxtotal;
+        console.log(maxTotal);
+        orderBook(book.book[0]);
         priceLine(trades);
     }
 
@@ -58,9 +73,14 @@
             .text("Price ($)");
 
         var inverseX = d3.scaleLinear().domain([0, lineWidth]).rangeRound([0, data.length]);
+        var bookSampleX = d3.scaleLinear().domain([0, lineWidth]).rangeRound([0, numOrderBookSamples]);
 
         function updatePrice(index) {
             boundText.raise().text('Current price ($): ' + data[inverseX(index)].price);
+            console.log("bookSampleI", bookSampleX(index));
+            console.log(bookData[bookSampleX(index)].bids);
+            d3.select('#bidpath').attr("d", lineBook(bookData[bookSampleX(index)].bids));
+            d3.select('#askpath').attr("d", lineBook(bookData[bookSampleX(index)].asks));
         }
 
         function dragCursor() {
@@ -174,8 +194,10 @@
     function orderBook(data) {
         console.log(data);
         //data = data.asks;
-        xBook.domain([-3,230]);
-
+        xBook.domain([-3,maxTotal]);
+        //xBook.domain(d3.extent(data.asks, function (d) {
+        //    return d.total;
+        //}));
         yBook.domain(extent);
 
         gBook.append("g")
@@ -199,22 +221,22 @@
         bookCanvas = gBook.append("g");
 
         bookCanvas.append("path")   // Bids
-            .datum(data.asks)
+            .attr("id", "bidpath")
             .attr("fill", "none")
             .attr("stroke", "green")
             .attr("stroke-linejoin", "round")
             .attr("stroke-linecap", "round")
             .attr("stroke-width", 1.5)
-            .attr("d", lineBook);
+            .attr("d", lineBook(data.asks));
 
         bookCanvas.append("path")  // Asks
-            .datum(data.bids)
+            .attr("id", "askpath")
             .attr("fill", "none")
             .attr("stroke", "red")
             .attr("stroke-linejoin", "round")
             .attr("stroke-linecap", "round")
             .attr("stroke-width", 1.5)
-            .attr("d", lineBook);
+            .attr("d", lineBook(data.bids));
     }
 </script>
 </body>
