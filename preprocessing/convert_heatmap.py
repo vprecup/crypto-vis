@@ -49,8 +49,8 @@ for i, pbin in enumerate(priceBins[1:]):
     for it, t in enumerate(timerange):
         vol = sum(df[(df.t==t)&ix].amount)
         volumeArray[i,it]= vol
-        if vol>1:
-            outData.append([datetime_to_epoch_ms(t), pbin, vol]) 
+        if vol>0.1 or vol<-0.1:
+            outData.append([datetime_to_epoch_ms(t), pbin, (vol)]) 
             
 out = pd.DataFrame(outData,columns=['date','price','vol'])
 out.to_csv('volArray.csv',index=False)
