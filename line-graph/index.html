@@ -85,9 +85,11 @@
                 console.log(maxTotal);
                 orderBook(book.book[0]);
                 
-                priceLine(trades);
+                
+                priceLine(trades, volume); //TODO
+             //   volumeHeatmap(volume);
                 tradedVolume(trades);
-                volumeHeatmap(volume);
+    
             }
 
             function tradedVolume(trades) {
@@ -121,7 +123,9 @@
 
             function volumeHeatmap(volume) {
 
-               colorScale.domain([0, d3.max(volume, v => v.vol)]);
+               var colorScale = d3.scaleLinear([0, 1]);
+                
+                colorScale.domain([d3.min(volume, v => v.vol), d3.max(volume, v => v.vol)]);
 
                 Heatmap = gPrice.append("g");
                 
@@ -131,11 +135,11 @@
                 volRect.enter()
                         .append('rect')
                         .attr('class', 'cell')
-                        .attr('width', 11.5)
-                        .attr('height', 13)
+                        .attr('width', 12)
+                        .attr('height', 14)
                         .attr('x', function(d) { return xLine(d.date); })
                         .attr('y', function(d) { return yLine(d.price); })
-                        .attr('fill', function(d) { return  colorScale( d.vol ) ; }); //colorScale
+                        .attr('fill', function(d) { return  d3.interpolateGreys(colorScale(d.vol)) ; }); //colorScale
 
                 // Map your color scaler to the domain [0, hightest volume of the orders]
              //   colorScale.domain([0, d3.max(orders, o => o.volume)]);
@@ -160,11 +164,13 @@
   //                  .attr('stroke-width', 2);
             }
 
-            function priceLine(data)  {
+            function priceLine(data, volume)  {
                 xLine.domain(d3.extent(data, function (d) {
                     return d.date;
                 }));
                 yLine.domain(extent);
+
+                volumeHeatmap(volume);
 
                 gPrice.append("g")
                     .attr("transform", "translate(0," + height + ")")
@@ -188,6 +194,7 @@
                     .attr("dy", "0.71em")
                     .attr("text-anchor", "end")
                     .text("Price ($)");
+                    
 
                 var inverseX = d3.scaleLinear().domain([0, lineWidth]).rangeRound([0, data.length]);
                 var bookSampleX = d3.scaleLinear().domain([0, lineWidth]).rangeRound([0, numOrderBookSamples]);
@@ -210,6 +217,8 @@
                     updatePrice(d3.event.x);
                 }
                 dataCanvas = gPrice.append("g");
+                
+                
 
                 // Current time selection cursor
                 var cursor = dataCanvas.append('g');
@@ -241,10 +250,10 @@
                 dataCanvas.append("path")
                     .datum(data)
                     .attr("fill", "none")
-                    .attr("stroke", "steelblue")
+                    .attr("stroke", "black")
                     .attr("stroke-linejoin", "round")
                     .attr("stroke-linecap", "round")
-                    .attr("stroke-width", 1.5)
+                    .attr("stroke-width", 8)
                     .attr("d", linePrice)
                     .on('loaded', updatePrice(data.length / 2));
 
@@ -253,19 +262,6 @@
 
             var colorScale = d3.scaleLinear([0, 1]);
 
-            function drawOrders(volCanvas, orders) {
-                // Map your color scaler to the domain [0, hightest volume of the orders]
-                colorScale.domain([0, d3.max(orders, o => o.volume)]);
-
-                orderLines = volCanvas.selectAll('lines').data(orders);
-                orderLines_enter = orderLines.enter().append('line')
-                    .attr('x1', o => xLine(o.x1))
-                    .attr('x2', o => xLine(o.x2))
-                    .attr('y1', o => yLine(o.y))
-                    .attr('y2', o => yLine(o.y))
-                    .attr('stroke', o => d3.interpolateViridis(colorScale(o.volume)))
-                    .attr('stroke-width', 2);
-            }
 
 
             // order book
