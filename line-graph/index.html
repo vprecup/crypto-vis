@@ -3,14 +3,14 @@
     <head>
         <title>cryptovis</title>
         <style>
-            svg { display: inline-block}
-            #line {
+            svg { display: inline-block }
+            /*#line {
                // outline: 1px solid red;
             }
             #book {
                // outline: 1px solid blue;
                // display: inline;
-            }
+            }*/
             * {
                 font-family: "Arimo", Sans-Serif;
             }
@@ -25,6 +25,7 @@
 
         <script src="https://d3js.org/d3.v4.min.js"></script>
         <script src="/node_modules/d3-queue/build/d3-queue.js"></script>
+        <script src="/node_modules/d3-scale-chromatic/dist/d3-scale-chromatic.min.js"></script>
         <script>
             var extent = {};
             var numOrderBookSamples;
@@ -62,35 +63,29 @@
                     return d;
                 })
                 .defer(d3.json, "./data/processed_book.json")
-                .defer(d3.tsv, "./data/volArray.csv", function (obj) {
-                    var newItem = {}
-                    newItem.date = parseTime(obj.date);
-                    newItem.price = +obj.price;
-                    newItem.vol = obj.vol
-                    return newItem;
+                .defer(d3.csv, "./data/volArray.csv", function (d) {
+                    d.date = parseTime(d.date);
+                    d.price = +d.price;
+                    d.vol = Number(d.vol); 
+                    return d;
                 })
                 .await(analyze);
 
             function analyze(error, trades, book, volume) {
                 if(error) { console.log(error); }
-
-                console.log("trades", trades);
-                console.log("book", book);
-                console.log("vol", volume);
-
+                
                 extent = book.extent;
                 numOrderBookSamples = book.book.length;
                 bookData = book.book;
                 maxTotal = book.maxtotal;
                 console.log(maxTotal);
                 orderBook(book.book[0]);
-                priceLine(trades);
+                
+                priceLine(trades, volume); 
                 tradedVolume(trades);
-                volumeHeatmap(volume);
             }
 
             function tradedVolume(trades) {
-                console.log(trades);
                 volScale.domain([0, d3.max(trades, t => t.amount)]);
 
                 volHeight = height + margin.top;
@@ -119,10 +114,10 @@
             }
 
             function volumeHeatmap(volume) {
-        //                volume.date 
-        //               volume.price
-        //               volume.vol
-                var colorScale = d3.scaleLinear([0,1]);
+
+               var colorScale = d3.scaleLinear([0, 1]);
+                
+                colorScale.domain([d3.min(volume, v => v.vol), d3.max(volume, v => v.vol)]);
 
                 Heatmap = gPrice.append("g");
                 
@@ -132,40 +127,20 @@
                 volRect.enter()
                         .append('rect')
                         .attr('class', 'cell')
-                        .attr('width', 10)
-                        .attr('height', 10)
-                        .attr('y', function(d) { return yScale(d.price); })
-                        .attr('x', function(d) { return xScale(d.date); })
-                        .attr('fill', function(d) { return colorScale(d.volume); });
-
-                // Map your color scaler to the domain [0, hightest volume of the orders]
-                colorScale.domain([0, d3.max(orders, o => o.volume)]);
-
-  //             drawOrders(dataCanvas, [{ x1: 1527359266364, x2: 1527361866930, y: 7580, volume: 20},
-   //             { x1: 1527361866930, x2: 1527362152106, y: 7570, volume: 100}]);
-   //         }
-
-   //         var colorScale = d3.scaleLinear([0, 1]);
-
-   //         function drawOrders(volCanvas, orders) {
-                // Map your color scaler to the domain [0, hightest volume of the orders]
-  //              colorScale.domain([0, d3.max(orders, o => o.volume)]);
-
-  //              orderLines = volCanvas.selectAll('lines').data(orders);
-  //              orderLines_enter = orderLines.enter().append('line')
-  //                  .attr('x1', o => xLine(o.x1)) 
- //                   .attr('x2', o => xLine(o.x2)) 
-  //                  .attr('y1', o => yLine(o.y)) 
-  //                  .attr('y2', o => yLine(o.y)) 
-  //                  .attr('stroke', o => d3.interpolateViridis(colorScale(o.volume)))
-  //                  .attr('stroke-width', 2);
+                        .attr('width', 12)
+                        .attr('height', 14)
+                        .attr('x', function(d) { return xLine(d.date); })
+                        .attr('y', function(d) { return yLine(d.price); })
+                        .attr('fill', function(d) { return  d3.interpolateRdBu(colorScale(d.vol)) ; });
             }
 
-            function priceLine(data)  {
+            function priceLine(data, volume)  {
                 xLine.domain(d3.extent(data, function (d) {
                     return d.date;
                 }));
                 yLine.domain(extent);
+
+                volumeHeatmap(volume);
 
                 gPrice.append("g")
                     .attr("transform", "translate(0," + height + ")")
@@ -177,8 +152,6 @@
                     .attr("dy", "0.71em")
                     .attr("text-anchor", "end")
                     .text("Time");
-                    //.select(".domain")
-                    //.remove();
 
                 gPrice.append("g")
                     .call(d3.axisLeft(yLine))
@@ -189,6 +162,7 @@
                     .attr("dy", "0.71em")
                     .attr("text-anchor", "end")
                     .text("Price ($)");
+                    
 
                 var inverseX = d3.scaleLinear().domain([0, lineWidth]).rangeRound([0, data.length]);
                 var bookSampleX = d3.scaleLinear().domain([0, lineWidth]).rangeRound([0, numOrderBookSamples]);
@@ -244,31 +218,13 @@
                 dataCanvas.append("path")
                     .datum(data)
                     .attr("fill", "none")
-                    .attr("stroke", "steelblue")
-                    .attr("stroke-linejoin", "round")
-                    .attr("stroke-linecap", "round")
-                    .attr("stroke-width", 1.5)
+                    .attr("stroke", "black")
+                    .attr("stroke-width", 3)
                     .attr("d", linePrice)
                     .on('loaded', updatePrice(data.length / 2));
-
             }
 
             var colorScale = d3.scaleLinear([0, 1]);
-
-            function drawOrders(volCanvas, orders) {
-                // Map your color scaler to the domain [0, hightest volume of the orders]
-                colorScale.domain([0, d3.max(orders, o => o.volume)]);
-
-                orderLines = volCanvas.selectAll('lines').data(orders);
-                orderLines_enter = orderLines.enter().append('line')
-                    .attr('x1', o => xLine(o.x1))
-                    .attr('x2', o => xLine(o.x2))
-                    .attr('y1', o => yLine(o.y))
-                    .attr('y2', o => yLine(o.y))
-                    .attr('stroke', o => d3.interpolateViridis(colorScale(o.volume)))
-                    .attr('stroke-width', 2);
-            }
-// END: Sample code for binding lines
 
             // order book
             var svgBook = d3.select("#book"),
@@ -323,13 +279,8 @@
                     .attr('stop-opacity', 0);
 
             function orderBook(data) {
-                console.log(data);
-                //data = data.asks;
                 xBook.domain([-1,maxTotal]);
                 xBookSingle.domain([0,106]);
-                //xBook.domain(d3.extent(data.asks, function (d) {
-                //    return d.total;
-                //}));
                 yBook.domain(extent);
 
                 gBook.append("g")
@@ -365,7 +316,7 @@
                 bookCanvas.append("path")   // Bids
                     .attr("id", "bidpath")
                     .attr("fill", "none")
-                    .attr("stroke", "red")
+                    .attr("stroke", "green")
                     .attr("stroke-linejoin", "round")
                     .attr("stroke-linecap", "round")
                     .attr("stroke-width", 1.5)
@@ -374,7 +325,7 @@
                 bookCanvas.append("path")  // Asks
                     .attr("id", "askpath")
                     .attr("fill", "none")
-                    .attr("stroke", "green")
+                    .attr("stroke", "red")
                     .attr("stroke-linejoin", "round")
                     .attr("stroke-linecap", "round")
                     .attr("stroke-width", 1.5)
@@ -414,7 +365,7 @@
                 bookCanvasSingle.append("path")   // Bids
                     .attr("id", "bidpathsingle")
                     .attr("fill", "none")
-                    .attr("stroke", "red")
+                    .attr("stroke", "green")
                     .attr("stroke-linejoin", "round")
                     .attr("stroke-linecap", "round")
                     .attr("stroke-width", 1.5)
@@ -423,12 +374,11 @@
                 bookCanvasSingle.append("path")  // Asks
                     .attr("id", "askpathsingle")
                     .attr("fill", "none")
-                    .attr("stroke", "green")
+                    .attr("stroke", "red")
                     .attr("stroke-linejoin", "round")
                     .attr("stroke-linecap", "round")
                     .attr("stroke-width", 1.5)
                     .attr("d", lineBookAmount(data.bids));
-
             }
         </script>
     </body>
