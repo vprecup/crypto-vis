@@ -14,7 +14,7 @@ with open("../bfxtrades.json","r") as datafile:
 
     datafile.close()
     with open("trades.tsv", "w") as out:
-        out.write("date\tprice\n")
+        out.write("date\tprice\tamount\n")
         for dat in newlist:
-            out.write("%s\t%s\n" % (dat["timestamp"], dat["price"]))
+            out.write("%s\t%s\t%s\n" % (dat["timestamp"], dat["price"], dat["amount"]))
         out.close()
