@@ -19,7 +19,8 @@
     <body>
         <div style="min-width: 1170px">
             <svg width="960" height="600" id="line"></svg>
-            <svg width="500" height="600" id="book"></svg>
+            <svg width="300" height="600" id="book"></svg>
+            <svg width="100" height="600" id="booksingle"></svg>
         </div>
 
         <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -120,8 +121,8 @@
                     .call(d3.axisBottom(xLine))
                     .append("text")
                     .attr("fill", "#000")
-                    .attr("x", 20)
-                    .attr("y", 25)
+                    .attr("x", -8)
+                    .attr("y", -2)
                     .attr("dy", "0.71em")
                     .attr("text-anchor", "end")
                     .text("Time");
@@ -144,9 +145,8 @@
                 function updatePrice(index) {
                     boundText.raise().text('Currently Selected Price ($): ' + data[inverseX(index)].price);
                     console.log("bookSampleI", bookSampleX(index));
-                    console.log(bookData[bookSampleX(index)].bids);
-                    d3.select('#bidpath').attr("d", lineBook(bookData[bookSampleX(index)].bids));
-                    d3.select('#askpath').attr("d", lineBook(bookData[bookSampleX(index)].asks));
+                    d3.select('#bidpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].bids));
+                    d3.select('#askpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].asks));
                 }
 
                 function dragCursor() {
@@ -204,8 +204,11 @@
             var xBook = d3.scaleLinear().rangeRound([0, bookWidth]);
             var yBook = d3.scaleLinear().rangeRound([height, 0]);
 
-            var lineBook = d3.line()
+            var lineBookTotal = d3.line()
                 .x(d => xBook(d.total))
+                .y(d => yBook(d.price));
+            var lineBookAmount = d3.line()
+                .x(d => xBook(d.amount))
                 .y(d => yBook(d.price));
 
             // cursor
@@ -279,7 +282,7 @@
                     .attr("stroke-linejoin", "round")
                     .attr("stroke-linecap", "round")
                     .attr("stroke-width", 1.5)
-                    .attr("d", lineBook(data.asks));
+                    .attr("d", lineBookTotal(data.asks));
 
                 bookCanvas.append("path")  // Asks
                     .attr("id", "askpath")
@@ -288,7 +291,7 @@
                     .attr("stroke-linejoin", "round")
                     .attr("stroke-linecap", "round")
                     .attr("stroke-width", 1.5)
-                    .attr("d", lineBook(data.bids));
+                    .attr("d", lineBookTotal(data.bids));
             }
         </script>
     </body>
