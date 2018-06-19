@@ -65,7 +65,7 @@
                 .defer(d3.json, "./data/processed_book.json")
                 .defer(d3.csv, "./data/volArray.csv", function (d) {
                     d.date = parseTime(d.date);
-                   d.price = +d.price;
+                    d.price = +d.price;
                     d.vol = Number(d.vol); 
                     return d;
                 })
@@ -73,11 +73,6 @@
 
             function analyze(error, trades, book, volume) {
                 if(error) { console.log(error); }
-
-              //  console.log("trades", trades);
-              //  console.log("book", book);
-               // console.log("vol", volume);
-
                 
                 extent = book.extent;
                 numOrderBookSamples = book.book.length;
@@ -86,15 +81,11 @@
                 console.log(maxTotal);
                 orderBook(book.book[0]);
                 
-                
-                priceLine(trades, volume); //TODO
-             //   volumeHeatmap(volume);
+                priceLine(trades, volume); 
                 tradedVolume(trades);
-    
             }
 
             function tradedVolume(trades) {
-                console.log(trades);
                 volScale.domain([0, d3.max(trades, t => t.amount)]);
 
                 volHeight = height + margin.top;
@@ -138,7 +129,7 @@
                         .attr('class', 'cell')
                         .attr('width', 12)
                         .attr('height', 14)
-                        .attr('x', function(d) { return xLine(d.date) + 10; })
+                        .attr('x', function(d) { return xLine(d.date); })
                         .attr('y', function(d) { return yLine(d.price); })
                         .attr('fill', function(d) { return  d3.interpolateRdBu(colorScale(d.vol)) ; });
             }
@@ -161,8 +152,6 @@
                     .attr("dy", "0.71em")
                     .attr("text-anchor", "end")
                     .text("Time");
-                    //.select(".domain")
-                    //.remove();
 
                 gPrice.append("g")
                     .call(d3.axisLeft(yLine))
@@ -196,8 +185,6 @@
                     updatePrice(d3.event.x);
                 }
                 dataCanvas = gPrice.append("g");
-                
-                
 
                 // Current time selection cursor
                 var cursor = dataCanvas.append('g');
@@ -230,18 +217,12 @@
                     .datum(data)
                     .attr("fill", "none")
                     .attr("stroke", "black")
-                    .attr("stroke-linejoin", "round")
-                    .attr("stroke-linecap", "round")
-                    .attr("stroke-width", 8)
+                    .attr("stroke-width", 3)
                     .attr("d", linePrice)
                     .on('loaded', updatePrice(data.length / 2));
-
             }
 
-
             var colorScale = d3.scaleLinear([0, 1]);
-
-
 
             // order book
             var svgBook = d3.select("#book"),
@@ -296,13 +277,8 @@
                     .attr('stop-opacity', 0);
 
             function orderBook(data) {
-                console.log(data);
-                //data = data.asks;
                 xBook.domain([-1,maxTotal]);
                 xBookSingle.domain([0,106]);
-                //xBook.domain(d3.extent(data.asks, function (d) {
-                //    return d.total;
-                //}));
                 yBook.domain(extent);
 
                 gBook.append("g")
@@ -400,7 +376,6 @@
                     .attr("stroke-linecap", "round")
                     .attr("stroke-width", 1.5)
                     .attr("d", lineBookAmount(data.bids));
-
             }
         </script>
     </body>
