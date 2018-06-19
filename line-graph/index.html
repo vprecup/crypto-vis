@@ -11,12 +11,15 @@
                 outline: 1px solid blue;
                 display: inline;
             }
+            * {
+                font-family: "Arimo", Sans-Serif;
+            }
         </style>
     </head>
     <body>
         <div style="min-width: 1170px">
             <svg width="960" height="600" id="line"></svg>
-            <svg width="200" height="600" id="book"></svg>
+            <svg width="500" height="600" id="book"></svg>
         </div>
 
         <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -115,8 +118,15 @@
                 gPrice.append("g")
                     .attr("transform", "translate(0," + height + ")")
                     .call(d3.axisBottom(xLine))
-                    .select(".domain")
-                    .remove();
+                    .append("text")
+                    .attr("fill", "#000")
+                    .attr("x", 20)
+                    .attr("y", 25)
+                    .attr("dy", "0.71em")
+                    .attr("text-anchor", "end")
+                    .text("Time");
+                    //.select(".domain")
+                    //.remove();
 
                 gPrice.append("g")
                     .call(d3.axisLeft(yLine))
@@ -195,12 +205,8 @@
             var yBook = d3.scaleLinear().rangeRound([height, 0]);
 
             var lineBook = d3.line()
-                .x(function (d) {
-                    return xBook(d.total);
-                })
-                .y(function (d) {
-                    return yBook(d.price);
-                });
+                .x(d => xBook(d.total))
+                .y(d => yBook(d.price));
 
             // cursor
             var boundText = svgLine.append('text')
@@ -230,7 +236,7 @@
             function orderBook(data) {
                 console.log(data);
                 //data = data.asks;
-                xBook.domain([-3,maxTotal]);
+                xBook.domain([-1,maxTotal]);
                 //xBook.domain(d3.extent(data.asks, function (d) {
                 //    return d.total;
                 //}));
@@ -254,6 +260,16 @@
                         .attr("dy", ".35em")
                         .attr("transform", "rotate(90)")
                         .style("text-anchor", "start");
+
+                gBook.append("text")
+                    .attr("fill", "#000")
+                    .attr("transform", "translate(0," + height + ")")
+                    .attr("y", 30)  
+                    .attr("x", 85)
+                    .attr("dy", "0.71em")
+                    .attr("text-anchor", "end")
+                    .attr("font-size", "8pt")
+                    .text("Cumulative Volume"); 
                 bookCanvas = gBook.append("g");
 
                 bookCanvas.append("path")   // Bids
