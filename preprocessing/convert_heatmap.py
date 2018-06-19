@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
+import time as ttime
 
 #### Bucket-Size Definition ##############
 # Price Bucket-size
@@ -8,8 +9,13 @@ stepSize = 3 #define Step-Size of Bins
 # Time Bucket-size
 tFreq = 'min' #frequency of time-Buckets
 
+# damn time conversion stuff
+def datetime_to_epoch_ms(datetime_string):
+    dt = datetime.datetime.strptime(datetime_string, '%Y-%m-%d %H:%M')
+    return int(ttime.mktime(dt.timetuple()) * 1000)
+
 ########## Load Data
-df = pd.read_json('data/bfxbook.json') # has all the trades
+df = pd.read_json('bfxbook.json') # has all the trades
 #df = pd.read_json('bfxtrades.json')
 
 #### get right format
@@ -44,7 +50,7 @@ for i, pbin in enumerate(priceBins[1:]):
         vol = sum(df[(df.t==t)&ix].amount)
         volumeArray[i,it]= vol
         if vol>1:
-            outData.append([t, pbin, vol]) 
+            outData.append([datetime_to_epoch_ms(t), pbin, vol]) 
             
-out = pd.DataFrame(outData,columns=['x','y','vol'])
+out = pd.DataFrame(outData,columns=['date','price','vol'])
 out.to_csv('volArray.csv',index=False)

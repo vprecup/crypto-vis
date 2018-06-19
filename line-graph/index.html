@@ -59,13 +59,21 @@
                     return d;
                 })
                 .defer(d3.json, "./data/processed_book.json")
+                .defer(d3.tsv, "./data/volArray.csv", function (obj) {
+                    var newItem = {}
+                    newItem.date = parseTime(obj.date);
+                    newItem.price = +obj.price;
+                    newItem.vol = obj.vol
+                    return newItem;
+                })
                 .await(analyze);
 
-            function analyze(error, trades, book) {
+            function analyze(error, trades, book, volume) {
                 if(error) { console.log(error); }
 
                 console.log("trades", trades);
                 console.log("book", book);
+                console.log("vol", volume);
 
                 extent = book.extent;
                 numOrderBookSamples = book.book.length;
@@ -75,6 +83,7 @@
                 orderBook(book.book[0]);
                 priceLine(trades);
                 tradedVolume(trades);
+                volumeHeatmap(volume);
             }
 
             function tradedVolume(trades) {
@@ -104,6 +113,49 @@
                     .attr('y2', t => volScale(t.amount))
                     .attr('stroke', 'green')
                     .attr('stroke-width', 2);
+            }
+
+            function volumeHeatmap(volume) {
+        //                volume.date 
+        //               volume.price
+        //               volume.vol
+                var colorScale = d3.scaleLinear([0,1]);
+
+                Heatmap = gPrice.append("g");
+                
+                //bind data to rectangles
+                volRect =  Heatmap.selectAll('rects').data(volume);
+                
+                volRect.enter()
+                        .append('rect')
+                        .attr('class', 'cell')
+                        .attr('width', 10)
+                        .attr('height', 10)
+                        .attr('y', function(d) { return yScale(d.price); })
+                        .attr('x', function(d) { return xScale(d.date); })
+                        .attr('fill', function(d) { return colorScale(d.volume); });
+
+                // Map your color scaler to the domain [0, hightest volume of the orders]
+                colorScale.domain([0, d3.max(orders, o => o.volume)]);
+
+  //             drawOrders(dataCanvas, [{ x1: 1527359266364, x2: 1527361866930, y: 7580, volume: 20},
+   //             { x1: 1527361866930, x2: 1527362152106, y: 7570, volume: 100}]);
+   //         }
+
+   //         var colorScale = d3.scaleLinear([0, 1]);
+
+   //         function drawOrders(volCanvas, orders) {
+                // Map your color scaler to the domain [0, hightest volume of the orders]
+  //              colorScale.domain([0, d3.max(orders, o => o.volume)]);
+
+  //              orderLines = volCanvas.selectAll('lines').data(orders);
+  //              orderLines_enter = orderLines.enter().append('line')
+  //                  .attr('x1', o => xLine(o.x1)) 
+ //                   .attr('x2', o => xLine(o.x2)) 
+  //                  .attr('y1', o => yLine(o.y)) 
+  //                  .attr('y2', o => yLine(o.y)) 
+  //                  .attr('stroke', o => d3.interpolateViridis(colorScale(o.volume)))
+  //                  .attr('stroke-width', 2);
             }
 
             function priceLine(data)  {
@@ -193,27 +245,8 @@
                     .attr("d", linePrice)
                     .on('loaded', updatePrice(data.length / 2));
 
-// BEGIN: sample code for binding lines
-                drawOrders(dataCanvas, [{ x1: 1527359266364, x2: 1527361866930, y: 7580, volume: 20},
-                { x1: 1527361866930, x2: 1527362152106, y: 7570, volume: 100}]);
             }
 
-            var colorScale = d3.scaleLinear([0, 1]);
-
-            function drawOrders(volCanvas, orders) {
-                // Map your color scaler to the domain [0, hightest volume of the orders]
-                colorScale.domain([0, d3.max(orders, o => o.volume)]);
-
-                orderLines = volCanvas.selectAll('lines').data(orders);
-                orderLines_enter = orderLines.enter().append('line')
-                    .attr('x1', o => xLine(o.x1)) 
-                    .attr('x2', o => xLine(o.x2)) 
-                    .attr('y1', o => yLine(o.y)) 
-                    .attr('y2', o => yLine(o.y)) 
-                    .attr('stroke', o => d3.interpolateViridis(colorScale(o.volume)))
-                    .attr('stroke-width', 2);
-            }
-// END: Sample code for binding lines
 
             // order book
             var svgBook = d3.select("#book"),
