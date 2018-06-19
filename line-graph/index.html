@@ -5,11 +5,11 @@
         <style>
             svg { display: inline-block}
             #line {
-                outline: 1px solid red;
+               // outline: 1px solid red;
             }
             #book {
-                outline: 1px solid blue;
-                display: inline;
+               // outline: 1px solid blue;
+               // display: inline;
             }
             * {
                 font-family: "Arimo", Sans-Serif;
@@ -17,9 +17,12 @@
         </style>
     </head>
     <body>
-        <svg width="960" height="600" id="line"></svg>
-        <svg width="500" height="600" id="book"></svg>
-        
+        <div style="min-width: 1170px">
+            <svg width="760" height="600" id="line"></svg>
+            <svg width="300" height="600" id="book"></svg>
+            <svg width="200" height="600" id="booksingle"></svg>
+        </div>
+
         <script src="https://d3js.org/d3.v4.min.js"></script>
         <script src="/node_modules/d3-queue/build/d3-queue.js"></script>
         <script>
@@ -194,9 +197,10 @@
                     boundText.raise().text('Currently Selected Price ($): ' + data[inverseX(index)].price);
                     volBoundText.raise().text('Current Volume (BTC): ' + data[inverseX(index)].amount);
                     console.log("bookSampleI", bookSampleX(index));
-                    console.log(bookData[bookSampleX(index)].bids);
-                    d3.select('#bidpath').attr("d", lineBook(bookData[bookSampleX(index)].bids));
-                    d3.select('#askpath').attr("d", lineBook(bookData[bookSampleX(index)].asks));
+                    d3.select('#bidpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].bids));
+                    d3.select('#askpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].asks));
+                    d3.select('#bidpathsingle').attr("d", lineBookAmount(bookData[bookSampleX(index)].bids));
+                    d3.select('#askpathsingle').attr("d", lineBookAmount(bookData[bookSampleX(index)].asks));
                 }
 
                 function dragCursor() {
@@ -233,7 +237,7 @@
                         d3.select(this).attr('opacity', 0);
                     })
                     .call(d3.drag().on('drag', dragCursor));
-                                
+
                 // Price line graph / Path
                 dataCanvas.append("path")
                     .datum(data)
@@ -247,17 +251,44 @@
 
             }
 
+<<<<<<< HEAD
+=======
+            var colorScale = d3.scaleLinear([0, 1]);
+
+            function drawOrders(volCanvas, orders) {
+                // Map your color scaler to the domain [0, hightest volume of the orders]
+                colorScale.domain([0, d3.max(orders, o => o.volume)]);
+
+                orderLines = volCanvas.selectAll('lines').data(orders);
+                orderLines_enter = orderLines.enter().append('line')
+                    .attr('x1', o => xLine(o.x1))
+                    .attr('x2', o => xLine(o.x2))
+                    .attr('y1', o => yLine(o.y))
+                    .attr('y2', o => yLine(o.y))
+                    .attr('stroke', o => d3.interpolateViridis(colorScale(o.volume)))
+                    .attr('stroke-width', 2);
+            }
+// END: Sample code for binding lines
+>>>>>>> origin/master
 
             // order book
             var svgBook = d3.select("#book"),
                 bookWidth = +svgBook.attr("width") - margin.left - margin.right,
                 gBook = svgBook.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+            var svgBookSingle = d3.select("#booksingle"),
+                bookWidthSingle = +svgBookSingle.attr("width") - margin.left - margin.right,
+                gBookSingle = svgBookSingle.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
             var xBook = d3.scaleLinear().rangeRound([0, bookWidth]);
             var yBook = d3.scaleLinear().rangeRound([height, 0]);
+            var xBookSingle = d3.scaleLinear().rangeRound([0, bookWidthSingle]);
 
-            var lineBook = d3.line()
+            var lineBookTotal = d3.line()
                 .x(d => xBook(d.total))
+                .y(d => yBook(d.price));
+            var lineBookAmount = d3.line()
+                .x(d => xBookSingle(d.amount))
                 .y(d => yBook(d.price));
 
             // cursor
@@ -296,6 +327,7 @@
                 console.log(data);
                 //data = data.asks;
                 xBook.domain([-1,maxTotal]);
+                xBookSingle.domain([0,106]);
                 //xBook.domain(d3.extent(data.asks, function (d) {
                 //    return d.total;
                 //}));
@@ -338,7 +370,7 @@
                     .attr("stroke-linejoin", "round")
                     .attr("stroke-linecap", "round")
                     .attr("stroke-width", 1.5)
-                    .attr("d", lineBook(data.asks));
+                    .attr("d", lineBookTotal(data.asks));
 
                 bookCanvas.append("path")  // Asks
                     .attr("id", "askpath")
@@ -347,7 +379,56 @@
                     .attr("stroke-linejoin", "round")
                     .attr("stroke-linecap", "round")
                     .attr("stroke-width", 1.5)
-                    .attr("d", lineBook(data.bids));
+                    .attr("d", lineBookTotal(data.bids));
+
+                gBookSingle.append("g")
+                    .call(d3.axisLeft(yBook))
+                    .append("text")
+                        .attr("fill", "#000")
+                        .attr("transform", "rotate(-90)")
+                        .attr("y", 6)
+                        .attr("dy", "0.71em")
+                        .attr("text-anchor", "end")
+                        .text("Price ($)");
+                gBookSingle.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(xBookSingle))
+                    .selectAll("text")  // turn labels 90°
+                        .attr("y", 0)
+                        .attr("x", 9)
+                        .attr("dy", ".35em")
+                        .attr("transform", "rotate(90)")
+                        .style("text-anchor", "start");
+
+                gBookSingle.append("text")
+                    .attr("fill", "#000")
+                    .attr("transform", "translate(0," + height + ")")
+                    .attr("y", 30)
+                    .attr("x", 85)
+                    .attr("dy", "0.71em")
+                    .attr("text-anchor", "end")
+                    .attr("font-size", "8pt")
+                    .text("Volume");
+                bookCanvasSingle = gBookSingle.append("g");
+
+                bookCanvasSingle.append("path")   // Bids
+                    .attr("id", "bidpathsingle")
+                    .attr("fill", "none")
+                    .attr("stroke", "green")
+                    .attr("stroke-linejoin", "round")
+                    .attr("stroke-linecap", "round")
+                    .attr("stroke-width", 1.5)
+                    .attr("d", lineBookAmount(data.asks));
+
+                bookCanvasSingle.append("path")  // Asks
+                    .attr("id", "askpathsingle")
+                    .attr("fill", "none")
+                    .attr("stroke", "red")
+                    .attr("stroke-linejoin", "round")
+                    .attr("stroke-linecap", "round")
+                    .attr("stroke-width", 1.5)
+                    .attr("d", lineBookAmount(data.bids));
+
             }
         </script>
     </body>
