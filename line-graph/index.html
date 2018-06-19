@@ -3,14 +3,14 @@
     <head>
         <title>cryptovis</title>
         <style>
-            svg { display: inline-block}
-            #line {
+            svg { display: inline-block }
+            /*#line {
                // outline: 1px solid red;
             }
             #book {
                // outline: 1px solid blue;
                // display: inline;
-            }
+            }*/
             * {
                 font-family: "Arimo", Sans-Serif;
             }
@@ -25,7 +25,7 @@
 
         <script src="https://d3js.org/d3.v4.min.js"></script>
         <script src="/node_modules/d3-queue/build/d3-queue.js"></script>
-        <script src="/node_modules/d3-scale-chromatic/d3-scale-chromatic.min.js"></script>
+        <script src="/node_modules/d3-scale-chromatic/dist/d3-scale-chromatic.min.js"></script>
         <script>
             var extent = {};
             var numOrderBookSamples;
@@ -138,31 +138,9 @@
                         .attr('class', 'cell')
                         .attr('width', 12)
                         .attr('height', 14)
-                        .attr('x', function(d) { return xLine(d.date); })
+                        .attr('x', function(d) { return xLine(d.date) + 10; })
                         .attr('y', function(d) { return yLine(d.price); })
-                        .attr('fill', function(d) { return  d3.interpolateGreys(colorScale(d.vol)) ; }); //colorScale
-
-                // Map your color scaler to the domain [0, hightest volume of the orders]
-             //   colorScale.domain([0, d3.max(orders, o => o.volume)]);
-
-  //             drawOrders(dataCanvas, [{ x1: 1527359266364, x2: 1527361866930, y: 7580, volume: 20},
-   //             { x1: 1527361866930, x2: 1527362152106, y: 7570, volume: 100}]);
-   //         }
-
-   //         var colorScale = d3.scaleLinear([0, 1]);
-
-   //         function drawOrders(volCanvas, orders) {
-                // Map your color scaler to the domain [0, hightest volume of the orders]
-  //              colorScale.domain([0, d3.max(orders, o => o.volume)]);
-
-  //              orderLines = volCanvas.selectAll('lines').data(orders);
-  //              orderLines_enter = orderLines.enter().append('line')
-  //                  .attr('x1', o => xLine(o.x1)) 
- //                   .attr('x2', o => xLine(o.x2)) 
-  //                  .attr('y1', o => yLine(o.y)) 
-  //                  .attr('y2', o => yLine(o.y)) 
-  //                  .attr('stroke', o => d3.interpolateViridis(colorScale(o.volume)))
-  //                  .attr('stroke-width', 2);
+                        .attr('fill', function(d) { return  d3.interpolateRdBu(colorScale(d.vol)) ; });
             }
 
             function priceLine(data, volume)  {
