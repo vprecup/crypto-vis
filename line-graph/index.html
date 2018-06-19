@@ -23,23 +23,23 @@
         .defer(d3.json, "../processed_book.json")
         .await(analyze);
 
+    var extent = {};
     function analyze(error, trades, book) {
         if(error) { console.log(error); }
 
         console.log("trades", trades);
         console.log("book", book);
 
+        extent = book.extent;
+        orderBook(book.book[100]);
         priceLine(trades);
-        orderBook(book);
     }
 
     function priceLine(data)  {
         xLine.domain(d3.extent(data, function (d) {
             return d.date;
         }));
-        yLine.domain(d3.extent(data, function (d) {
-            return d.price;
-        }));
+        yLine.domain(extent);
 
         gPrice.append("g")
             .attr("transform", "translate(0," + height + ")")
@@ -132,29 +132,6 @@
             return yLine(d.price);
         });
 
-    // cursor
-    var boundText = svgLine.append('text')
-        .attr('y', height + margin.top + margin.bottom - 20)
-        .attr('x', margin.left)
-        .text('Sample');
-
-    var cursorGradient = svgLine.append('linearGradient').
-    cursorGradient.attr('x1', 0)
-        .attr('x2', 1)
-        .attr('y1', 0)
-        .attr('y2', 0)
-        .attr('id', 'cursorGradient');
-    cursorGradient.append('stop')
-        .attr('offset', 0)
-        .attr('stop-opacity', 0);
-    cursorGradient.append('stop')
-        .attr('offset', 0.5)
-        .attr('stop-color', '#0000ff')
-        .attr('stop-opacity', 0.5);
-    cursorGradient.append('stop')
-        .attr('offset', 1)
-        .attr('stop-opacity', 0);
-
     // order book
     var svgBook = d3.select("#book"),
         bookWidth = +svgBook.attr("width") - margin.left - margin.right,
@@ -171,24 +148,45 @@
             return yBook(d.price);
         });
 
+    // cursor
+    var boundText = svgLine.append('text')
+        .attr('y', height + margin.top + margin.bottom - 20)
+        .attr('x', margin.left)
+        .text('Sample');
+
+    var cursorGradient = svgLine.append('linearGradient').
+        attr('x1', 0)
+            .attr('x2', 1)
+            .attr('y1', 0)
+            .attr('y2', 0)
+            .attr('id', 'cursorGradient');
+        cursorGradient.append('stop')
+            .attr('offset', 0)
+            .attr('stop-opacity', 0);
+        cursorGradient.append('stop')
+            .attr('offset', 0.5)
+            .attr('stop-color', '#0000ff')
+            .attr('stop-opacity', 0.5);
+        cursorGradient.append('stop')
+            .attr('offset', 1)
+            .attr('stop-opacity', 0);
+
     function orderBook(data) {
         console.log(data);
         //data = data.asks;
-        xBook.domain(d3.extent(data.asks, function (d) {
-            return d.total;
-        }));
+        xBook.domain([-3,230]);
 
-        yBook.domain([data.bids[99].price, data.asks[0].price]);
+        yBook.domain(extent);
 
         gBook.append("g")
             .call(d3.axisLeft(yBook))
             .append("text")
-            .attr("fill", "#000")
-            .attr("transform", "rotate(-90)")
-            .attr("y", 6)
-            .attr("dy", "0.71em")
-            .attr("text-anchor", "end")
-            .text("Price ($)");
+                .attr("fill", "#000")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 6)
+                .attr("dy", "0.71em")
+                .attr("text-anchor", "end")
+                .text("Price ($)");
         gBook.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(xBook))
