@@ -21,12 +21,12 @@
 
     // load data files
     d3.queue()
-        .defer(d3.tsv, "trades.tsv", function (d) {
+        .defer(d3.tsv, "./data/trades.tsv", function (d) {
             d.date = parseTime(d.date);
             d.price = +d.price;
             return d;
         })
-        .defer(d3.json, "../processed_book.json")
+        .defer(d3.json, "./data/processed_book.json")
         .await(analyze);
 
     var extent = {};
