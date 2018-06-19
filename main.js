@@ -17,4 +17,5 @@ var lines_enter = lines.enter().append('line')
     .attr('y1', v => vertCoordScaler(v))
     .attr('x2', 1000)
     .attr('y2', v => vertCoordScaler(v))
-    .attr('stroke', 'green');
+    .attr('stroke', 'green')
+    .attr('stroke-width', 10);
