@@ -194,13 +194,15 @@
                 var bookSampleX = d3.scaleLinear().domain([0, lineWidth]).rangeRound([0, numOrderBookSamples]);
 
                 function updatePrice(index) {
-                    boundText.raise().text('Currently Selected Price ($): ' + data[inverseX(index)].price);
-                    volBoundText.raise().text('Current Volume (BTC): ' + data[inverseX(index)].amount);
-                    console.log("bookSampleI", bookSampleX(index));
-                    d3.select('#bidpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].bids));
-                    d3.select('#askpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].asks));
-                    d3.select('#bidpathsingle').attr("d", lineBookAmount(bookData[bookSampleX(index)].bids));
-                    d3.select('#askpathsingle').attr("d", lineBookAmount(bookData[bookSampleX(index)].asks));
+                    if(data[inverseX(index)] !== undefined) {
+                        boundText.raise().text('Currently Selected Price ($): ' + data[inverseX(index)].price);
+                        volBoundText.raise().text('Current Volume (BTC): ' + data[inverseX(index)].amount);
+//                    console.log("bookSampleI", bookSampleX(index));
+                        d3.select('#bidpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].bids));
+                        d3.select('#askpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].asks));
+                        d3.select('#bidpathsingle').attr("d", lineBookAmount(bookData[bookSampleX(index)].bids));
+                        d3.select('#askpathsingle').attr("d", lineBookAmount(bookData[bookSampleX(index)].asks));
+                    }
                 }
 
                 function dragCursor() {
@@ -387,6 +389,7 @@
                         .attr("dy", "0.71em")
                         .attr("text-anchor", "end")
                         .text("Price ($)");
+
                 gBookSingle.append("g")
                     .attr("transform", "translate(0," + height + ")")
                     .call(d3.axisBottom(xBookSingle))
