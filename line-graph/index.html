@@ -251,8 +251,6 @@
 
             }
 
-<<<<<<< HEAD
-=======
             var colorScale = d3.scaleLinear([0, 1]);
 
             function drawOrders(volCanvas, orders) {
@@ -269,7 +267,6 @@
                     .attr('stroke-width', 2);
             }
 // END: Sample code for binding lines
->>>>>>> origin/master
 
             // order book
             var svgBook = d3.select("#book"),
@@ -366,7 +363,7 @@
                 bookCanvas.append("path")   // Bids
                     .attr("id", "bidpath")
                     .attr("fill", "none")
-                    .attr("stroke", "green")
+                    .attr("stroke", "red")
                     .attr("stroke-linejoin", "round")
                     .attr("stroke-linecap", "round")
                     .attr("stroke-width", 1.5)
@@ -375,7 +372,7 @@
                 bookCanvas.append("path")  // Asks
                     .attr("id", "askpath")
                     .attr("fill", "none")
-                    .attr("stroke", "red")
+                    .attr("stroke", "green")
                     .attr("stroke-linejoin", "round")
                     .attr("stroke-linecap", "round")
                     .attr("stroke-width", 1.5)
@@ -414,7 +411,7 @@
                 bookCanvasSingle.append("path")   // Bids
                     .attr("id", "bidpathsingle")
                     .attr("fill", "none")
-                    .attr("stroke", "green")
+                    .attr("stroke", "red")
                     .attr("stroke-linejoin", "round")
                     .attr("stroke-linecap", "round")
                     .attr("stroke-width", 1.5)
@@ -423,7 +420,7 @@
                 bookCanvasSingle.append("path")  // Asks
                     .attr("id", "askpathsingle")
                     .attr("fill", "none")
-                    .attr("stroke", "red")
+                    .attr("stroke", "green")
                     .attr("stroke-linejoin", "round")
                     .attr("stroke-linecap", "round")
                     .attr("stroke-width", 1.5)
