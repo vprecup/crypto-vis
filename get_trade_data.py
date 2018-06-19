@@ -33,28 +33,30 @@ if __name__ == "__main__":
         "query": {
             "range": {
                 "timestamp": {
-                    "gte": "now-1h",
-                    "lt": "now"
+                    "gte": 1529338812629,
+                    "lte": 1529339988895,
+                    "format": "epoch_millis"
                 }
             }
         }
     }
 
-    dumpindex(es, "bitfinextradesbtc", body, "bfxtrades.json")
+    dumpindex(es, "bitfinextradesbtc", body, "bfxtrades2.json")
 
     # book and updates indexed by "localtime"
     body = {
         "query": {
             "range": {
                 "localtime": {
-                    "gte": "now-1h",
-                    "lt": "now"
+                    "gte": 1529338812629,
+                    "lte": 1529339988895,
+                    "format": "epoch_millis"
                 }
             }
         }
     }
 
-    dumpindex(es, "bitfinexbtcbook", body, "bfxbook.json")
+    dumpindex(es, "bitfinexbtcbook", body, "bfxbook2.json")
     # still gotta work on dumping updates they are too large...
     # elasticsearch.exceptions.TransportError: TransportError(500, 'search_phase_execution_exception', 'Result window is too large, from + size must be less than or equal to: [10000] but was [133801]. See the scroll api for a more efficient way to request large data sets. This limit can be set by changing the [index.max_result_window] index level setting.')
     # dumpindex(es, "bitfinexbtcbookupdate", body, "bfxbookupdate.json")
