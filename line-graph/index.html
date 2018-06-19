@@ -11,7 +11,6 @@
 <svg width="200" height="600" id="book"></svg>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
-
     var svgBook = d3.select("#book");
     var svgLine = d3.select("#line"),
         cursorWidth = 16,
@@ -156,13 +155,12 @@
     d3.json("../processed_book.json", function (error, data) {
         console.log(error);
         console.log(data);
-        data = data.asks;
-        xBook.domain(d3.extent(data, function (d) {
+        //data = data.asks;
+        xBook.domain(d3.extent(data.asks, function (d) {
             return d.total;
         }));
-        yBook.domain(d3.extent(data, function (d) {
-             return d.price;
-        }));
+
+        yBook.domain([data.bids[99].price, data.asks[0].price]);
 
         gBook.append("g")
             .call(d3.axisLeft(yBook))
@@ -184,15 +182,23 @@
                 .style("text-anchor", "start");
         bookCanvas = gBook.append("g");
 
-        bookCanvas.append("path")
-            .datum(data)
+        bookCanvas.append("path")   // Bids
+            .datum(data.asks)
             .attr("fill", "none")
             .attr("stroke", "green")
             .attr("stroke-linejoin", "round")
             .attr("stroke-linecap", "round")
-            .attr("stroke-width", 2.5)
-            .attr("d", lineBook)
-            .on('loaded', updatePrice(data.length / 2));
+            .attr("stroke-width", 1.5)
+            .attr("d", lineBook);
+
+        bookCanvas.append("path")  // Asks
+            .datum(data.bids)
+            .attr("fill", "none")
+            .attr("stroke", "red")
+            .attr("stroke-linejoin", "round")
+            .attr("stroke-linecap", "round")
+            .attr("stroke-width", 1.5)
+            .attr("d", lineBook);
     });
 </script>
 </body>
