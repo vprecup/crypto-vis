@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>cryptovis</title>
+        <style>
+            svg { display: inline-block }
+            /*#line {
+               // outline: 1px solid red;
+            }
+            #book {
+               // outline: 1px solid blue;
+               // display: inline;
+            }*/
+            * {
+                font-family: "Arimo", Sans-Serif;
+            }
+        </style>
+    </head>
+    <body>
+        <div style="min-width: 1170px">
+            <svg width="760" height="600" id="line"></svg>
+            <svg width="300" height="600" id="book"></svg>
+            <svg width="200" height="600" id="booksingle"></svg>
+        </div>
+
+        <script src="/static/dist/d3.v4.min.js"></script>
+        <script src="/static/dist/d3-queue.js"></script>
+        <script src="/static/dist/d3-scale-chromatic.min.js"></script>
+        <script>
+            var extent = {};
+            var numOrderBookSamples;
+            var bookData;
+            var bookCanvas;
+            var maxTotal;
+            
+            var cursorWidth = 16,
+                margin = {top: 20, right: 20, bottom: 170, left: 50};
+
+            // price line
+            var svgLine = d3.select("#line"),
+                lineWidth = +svgLine.attr("width") - margin.left - margin.right,
+                height = +svgLine.attr("height") - margin.top - margin.bottom,
+                gPrice = svgLine.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            var parseTime = d3.timeParse("%Q");
+
+            var xLine = d3.scaleTime().rangeRound([0, lineWidth]);
+            var yLine = d3.scaleLinear().rangeRound([height, 0]);
+
+            var linePrice = d3.line()
+                .x(d => xLine(d.date))
+                .y(d => yLine(d.price));
+            
+            var volCanvasHeight = margin.bottom - 50,
+                volScale = d3.scaleLinear().rangeRound([0, volCanvasHeight]);
+
+            // load data files
+            d3.queue()
+                .defer(d3.tsv, "./static/trades.tsv", function (d) {
+                    d.date = parseTime(d.date);
+                    d.price = +d.price;
+                    d.amount = (d.amount < 0) ? -d.amount : Number(d.amount);
+                    return d;
+                })
+                .defer(d3.json, "./static/processed_book.json")
+                .defer(d3.csv, "./static/volArray.csv", function (d) {
+                    d.date = parseTime(d.date);
+                    d.price = +d.price;
+                    d.vol = Number(d.vol); 
+                    return d;
+                })
+                .await(analyze);
+
+            function analyze(error, trades, book, volume) {
+                if(error) { console.log(error); }
+                
+                extent = book.extent;
+                numOrderBookSamples = book.book.length;
+                bookData = book.book;
+                maxTotal = book.maxtotal;
+                console.log(maxTotal);
+                orderBook(book.book[0]);
+                
+                priceLine(trades, volume); 
+                tradedVolume(trades);
+            }
+
+            function tradedVolume(trades) {
+                volScale.domain([0, d3.max(trades, t => t.amount)]);
+
+                volHeight = height + margin.top;
+                volCanvas = gPrice.append("g")
+                    .attr("transform", "translate(0," + volHeight + ")");
+                
+                volCanvas.append("g")
+                    .call(d3.axisLeft(volScale))
+                    .append("text")
+                    .attr("fill", "#000")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 6)
+                    .attr("x", -volCanvasHeight)
+                    .attr("dy", "0.71em")
+                    .attr("text-anchor", "start")
+                    .text("Volume (BTC)");
+
+                volLines = volCanvas.selectAll('lines').data(trades);
+                volLines_enter = volLines.enter().append('line')
+                    .attr('x1', t => xLine(t.date))
+                    .attr('y1', 0)
+                    .attr('x2', t => xLine(t.date))
+                    .attr('y2', t => volScale(t.amount))
+                    .attr('stroke', 'green')
+                    .attr('stroke-width', 2);
+            }
+
+            function volumeHeatmap(volume) {
+
+               var colorScale = d3.scaleLinear([0, 1]);
+                
+                colorScale.domain([d3.min(volume, v => v.vol), d3.max(volume, v => v.vol)]);
+
+                Heatmap = gPrice.append("g");
+                
+                //bind data to rectangles
+                volRect =  Heatmap.selectAll('rects').data(volume);
+                
+                volRect.enter()
+                        .append('rect')
+                        .attr('class', 'cell')
+                        .attr('width', 12)
+                        .attr('height', 14)
+                        .attr('x', function(d) { return xLine(d.date); })
+                        .attr('y', function(d) { return yLine(d.price); })
+                        .attr('fill', function(d) { return  d3.interpolateRdBu(colorScale(d.vol)) ; });
+            }
+
+            function priceLine(data, volume)  {
+                xLine.domain(d3.extent(data, function (d) {
+                    return d.date;
+                }));
+                yLine.domain(extent);
+
+                volumeHeatmap(volume);
+
+                gPrice.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(xLine))
+                    .append("text")
+                    .attr("fill", "#000")
+                    .attr("x", 15)
+                    .attr("y", 9)
+                    .attr("dy", "0.71em")
+                    .attr("text-anchor", "end")
+                    .text("Time");
+
+                gPrice.append("g")
+                    .call(d3.axisLeft(yLine))
+                    .append("text")
+                    .attr("fill", "#000")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 6)
+                    .attr("dy", "0.71em")
+                    .attr("text-anchor", "end")
+                    .text("Price ($)");
+                    
+
+                var inverseX = d3.scaleLinear().domain([0, lineWidth]).rangeRound([0, data.length]);
+                var bookSampleX = d3.scaleLinear().domain([0, lineWidth]).rangeRound([0, numOrderBookSamples]);
+
+                function updatePrice(index) {
+                    boundText.raise().text('Currently Selected Price ($): ' + data[inverseX(index)].price);
+                    volBoundText.raise().text('Current Volume (BTC): ' + data[inverseX(index)].amount);
+                    console.log("bookSampleI", bookSampleX(index));
+                    d3.select('#bidpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].bids));
+                    d3.select('#askpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].asks));
+                    d3.select('#bidpathsingle').attr("d", lineBookAmount(bookData[bookSampleX(index)].bids));
+                    d3.select('#askpathsingle').attr("d", lineBookAmount(bookData[bookSampleX(index)].asks));
+                }
+
+                function dragCursor() {
+                    var cursor = d3.select(this).classed('dragging', true);
+                    var newValue = +cursor.attr('x') + d3.event.dx;
+                    cursor.attr('x', newValue);
+                    d3.select('#cursorLine').attr('x', newValue + cursorWidth / 2 - 1);
+                    updatePrice(d3.event.x);
+                }
+                dataCanvas = gPrice.append("g");
+
+                // Current time selection cursor
+                var cursor = dataCanvas.append('g');
+
+                cursor.append('rect')
+                    .attr('x', lineWidth / 2)
+                    .attr('y', 0)
+                    .attr('width', 2)
+                    .attr('height', height)
+                    .attr('id', 'cursorLine')
+                    .style('fill', 'red')
+                    .style('opacity', 1);
+                cursor.append('rect')
+                    .attr('x', (lineWidth - cursorWidth) / 2)
+                    .attr('y', 0)
+                    .attr('width', cursorWidth)
+                    .attr('height', height)
+                    .attr('fill', 'url(#cursorGradient)')
+                    .attr('opacity', 0)
+                    .on('mouseover', function (d, i) {
+                        d3.select(this).attr('opacity', 0.3);
+                    })
+                    .on('mouseout', function (d, i) {
+                        d3.select(this).attr('opacity', 0);
+                    })
+                    .call(d3.drag().on('drag', dragCursor));
+
+                // Price line graph / Path
+                dataCanvas.append("path")
+                    .datum(data)
+                    .attr("fill", "none")
+                    .attr("stroke", "black")
+                    .attr("stroke-width", 3)
+                    .attr("d", linePrice)
+                    .on('loaded', updatePrice(data.length / 2));
+            }
+
+            var colorScale = d3.scaleLinear([0, 1]);
+
+            // order book
+            var svgBook = d3.select("#book"),
+                bookWidth = +svgBook.attr("width") - margin.left - margin.right,
+                gBook = svgBook.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            var svgBookSingle = d3.select("#booksingle"),
+                bookWidthSingle = +svgBookSingle.attr("width") - margin.left - margin.right,
+                gBookSingle = svgBookSingle.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            var xBook = d3.scaleLinear().rangeRound([0, bookWidth]);
+            var yBook = d3.scaleLinear().rangeRound([height, 0]);
+            var xBookSingle = d3.scaleLinear().rangeRound([0, bookWidthSingle]);
+
+            var lineBookTotal = d3.line()
+                .x(d => xBook(d.total))
+                .y(d => yBook(d.price));
+            var lineBookAmount = d3.line()
+                .x(d => xBookSingle(d.amount))
+                .y(d => yBook(d.price));
+
+            // cursor
+            var boundText = svgLine.append('text')
+                .attr('y', height + margin.top + margin.bottom - 20)
+                .attr('x', margin.left)
+                .attr('font-family', 'Arial')
+                .attr("dy", "1em")
+                .text('Sample');
+
+            var volBoundText = svgLine.append('text')
+                .attr('y', height + margin.top + margin.bottom - 20)
+                .attr('x', margin.left + 400)
+                .attr('font-family', 'Arial')
+                .attr("dy", "1em")
+                .text('Sample2');
+
+            var cursorGradient = svgLine.append('linearGradient').
+                attr('x1', 0)
+                    .attr('x2', 1)
+                    .attr('y1', 0)
+                    .attr('y2', 0)
+                    .attr('id', 'cursorGradient');
+                cursorGradient.append('stop')
+                    .attr('offset', 0)
+                    .attr('stop-opacity', 0);
+                cursorGradient.append('stop')
+                    .attr('offset', 0.5)
+                    .attr('stop-color', '#0000ff')
+                    .attr('stop-opacity', 0.5);
+                cursorGradient.append('stop')
+                    .attr('offset', 1)
+                    .attr('stop-opacity', 0);
+
+            function orderBook(data) {
+                xBook.domain([-1,maxTotal]);
+                xBookSingle.domain([0,106]);
+                yBook.domain(extent);
+
+                gBook.append("g")
+                    .call(d3.axisLeft(yBook))
+                    .append("text")
+                        .attr("fill", "#000")
+                        .attr("transform", "rotate(-90)")
+                        .attr("y", 6)
+                        .attr("dy", "0.71em")
+                        .attr("text-anchor", "end")
+                        .text("Price ($)");
+                gBook.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(xBook))
+                    .selectAll("text")  // turn labels 90°
+                        .attr("y", 0)
+                        .attr("x", 9)
+                        .attr("dy", ".35em")
+                        .attr("transform", "rotate(90)")
+                        .style("text-anchor", "start");
+
+                gBook.append("text")
+                    .attr("fill", "#000")
+                    .attr("transform", "translate(0," + height + ")")
+                    .attr("y", 30)  
+                    .attr("x", 85)
+                    .attr("dy", "0.71em")
+                    .attr("text-anchor", "end")
+                    .attr("font-size", "8pt")
+                    .text("Cumulative Volume"); 
+                bookCanvas = gBook.append("g");
+
+                bookCanvas.append("path")   // Bids
+                    .attr("id", "bidpath")
+                    .attr("fill", "none")
+                    .attr("stroke", "green")
+                    .attr("stroke-linejoin", "round")
+                    .attr("stroke-linecap", "round")
+                    .attr("stroke-width", 1.5)
+                    .attr("d", lineBookTotal(data.asks));
+
+                bookCanvas.append("path")  // Asks
+                    .attr("id", "askpath")
+                    .attr("fill", "none")
+                    .attr("stroke", "red")
+                    .attr("stroke-linejoin", "round")
+                    .attr("stroke-linecap", "round")
+                    .attr("stroke-width", 1.5)
+                    .attr("d", lineBookTotal(data.bids));
+
+                gBookSingle.append("g")
+                    .call(d3.axisLeft(yBook))
+                    .append("text")
+                        .attr("fill", "#000")
+                        .attr("transform", "rotate(-90)")
+                        .attr("y", 6)
+                        .attr("dy", "0.71em")
+                        .attr("text-anchor", "end")
+                        .text("Price ($)");
+                gBookSingle.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(xBookSingle))
+                    .selectAll("text")  // turn labels 90°
+                        .attr("y", 0)
+                        .attr("x", 9)
+                        .attr("dy", ".35em")
+                        .attr("transform", "rotate(90)")
+                        .style("text-anchor", "start");
+
+                gBookSingle.append("text")
+                    .attr("fill", "#000")
+                    .attr("transform", "translate(0," + height + ")")
+                    .attr("y", 30)
+                    .attr("x", 85)
+                    .attr("dy", "0.71em")
+                    .attr("text-anchor", "end")
+                    .attr("font-size", "8pt")
+                    .text("Volume");
+                bookCanvasSingle = gBookSingle.append("g");
+
+                bookCanvasSingle.append("path")   // Bids
+                    .attr("id", "bidpathsingle")
+                    .attr("fill", "none")
+                    .attr("stroke", "green")
+                    .attr("stroke-linejoin", "round")
+                    .attr("stroke-linecap", "round")
+                    .attr("stroke-width", 1.5)
+                    .attr("d", lineBookAmount(data.asks));
+
+                bookCanvasSingle.append("path")  // Asks
+                    .attr("id", "askpathsingle")
+                    .attr("fill", "none")
+                    .attr("stroke", "red")
+                    .attr("stroke-linejoin", "round")
+                    .attr("stroke-linecap", "round")
+                    .attr("stroke-width", 1.5)
+                    .attr("d", lineBookAmount(data.bids));
+            }
+        </script>
+    </body>
+</html>
