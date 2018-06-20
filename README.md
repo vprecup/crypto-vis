@@ -97,7 +97,7 @@ Two small python programs consume these endpoints and store the results in an El
 
 We use the data from Elasticsearch to generate 3 final data files to display the orderbook, the trades and the heatmap.
 
-See the functions  `convertbook()` `converttrades()` and `convertheatmap()` in (app.py)[app.py] which also serves
+See the functions  `convertbook()` `converttrades()` and `convertheatmap()` in [app.py](app.py) which also serves
 as rudimentary web frontend.
 
 ## The visualization
