@@ -116,8 +116,8 @@
             function volumeHeatmap(volume) {
 
                var colorScale = d3.scaleLinear([0, 1]);
-                
-                colorScale.domain([d3.min(volume, v => v.vol), d3.max(volume, v => v.vol)]);
+
+                colorScale.domain([-d3.max(volume, v => Math.abs(v.vol)), d3.max(volume, v => Math.abs(v.vol))]);
 
                 Heatmap = gPrice.append("g");
                 
