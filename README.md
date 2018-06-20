@@ -1,4 +1,8 @@
-## Visulization of market data 
+# Visulization of market data 
+
+### quickstart
+
+`python3 -m http.server` go to [http://localhost:8000/demo](http://localhost:8000/demo)
 
 ##### A D3 visualization of the dynamic evolution of the market orders for the Bitcoin crpytocurrency.
 
