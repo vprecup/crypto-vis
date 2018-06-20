@@ -23,9 +23,9 @@
             <svg width="200" height="600" id="booksingle"></svg>
         </div>
 
-        <script src="https://d3js.org/d3.v4.min.js"></script>
-        <script src="/node_modules/d3-queue/build/d3-queue.js"></script>
-        <script src="/node_modules/d3-scale-chromatic/dist/d3-scale-chromatic.min.js"></script>
+        <script src="/static/dist/d3.v4.min.js"></script>
+        <script src="/static/dist/d3-queue.js"></script>
+        <script src="/static/dist/d3-scale-chromatic.min.js"></script>
         <script>
             var extent = {};
             var numOrderBookSamples;
@@ -56,14 +56,14 @@
 
             // load data files
             d3.queue()
-                .defer(d3.tsv, "./data/trades.tsv", function (d) {
+                .defer(d3.tsv, "./static/trades.tsv", function (d) {
                     d.date = parseTime(d.date);
                     d.price = +d.price;
                     d.amount = (d.amount < 0) ? -d.amount : Number(d.amount);
                     return d;
                 })
-                .defer(d3.json, "./data/processed_book.json")
-                .defer(d3.csv, "./data/volArray.csv", function (d) {
+                .defer(d3.json, "./static/processed_book.json")
+                .defer(d3.csv, "./static/volArray.csv", function (d) {
                     d.date = parseTime(d.date);
                     d.price = +d.price;
                     d.vol = Number(d.vol); 
@@ -120,7 +120,7 @@
                 colorScale.domain([-d3.max(volume, v => Math.abs(v.vol)), d3.max(volume, v => Math.abs(v.vol))]);
 
                 Heatmap = gPrice.append("g");
-
+                
                 //bind data to rectangles
                 volRect =  Heatmap.selectAll('rects').data(volume);
                 
@@ -168,15 +168,13 @@
                 var bookSampleX = d3.scaleLinear().domain([0, lineWidth]).rangeRound([0, numOrderBookSamples]);
 
                 function updatePrice(index) {
-                    if(data[inverseX(index)] !== undefined) {
-                        boundText.raise().text('Currently Selected Price ($): ' + data[inverseX(index)].price);
-                        volBoundText.raise().text('Current Volume (BTC): ' + data[inverseX(index)].amount);
-//                    console.log("bookSampleI", bookSampleX(index));
-                        d3.select('#bidpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].bids));
-                        d3.select('#askpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].asks));
-                        d3.select('#bidpathsingle').attr("d", lineBookAmount(bookData[bookSampleX(index)].bids));
-                        d3.select('#askpathsingle').attr("d", lineBookAmount(bookData[bookSampleX(index)].asks));
-                    }
+                    boundText.raise().text('Currently Selected Price ($): ' + data[inverseX(index)].price);
+                    volBoundText.raise().text('Current Volume (BTC): ' + data[inverseX(index)].amount);
+                    console.log("bookSampleI", bookSampleX(index));
+                    d3.select('#bidpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].bids));
+                    d3.select('#askpath').attr("d", lineBookTotal(bookData[bookSampleX(index)].asks));
+                    d3.select('#bidpathsingle').attr("d", lineBookAmount(bookData[bookSampleX(index)].bids));
+                    d3.select('#askpathsingle').attr("d", lineBookAmount(bookData[bookSampleX(index)].asks));
                 }
 
                 function dragCursor() {
@@ -340,7 +338,6 @@
                         .attr("dy", "0.71em")
                         .attr("text-anchor", "end")
                         .text("Price ($)");
-
                 gBookSingle.append("g")
                     .attr("transform", "translate(0," + height + ")")
                     .call(d3.axisBottom(xBookSingle))
