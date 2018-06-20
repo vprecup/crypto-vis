@@ -69,6 +69,7 @@ def convertbook():
         minprice = 10000000.0   # adjust according to mooning
         maxprice = 0.0
         maxtotal = 0.0
+        maxvolume = 0.0
         for step in data:
             bin = step['_source']
             sortedbin = sorted(bin['book'], key=lambda entry: entry['price'], reverse=True)
@@ -82,6 +83,8 @@ def convertbook():
                 asks[i]['total'] = askTotal
                 if askTotal > maxtotal:
                     maxtotal = askTotal
+                if asks[i]['amount'] > maxvolume:
+                    maxvolume = asks[i]['amount']
 
             bids = [{"price": item['price'],"amount": abs(item['amount'])} for item in sortedbin if item['amount'] > 0]
             bidTotal = 0.0
@@ -92,6 +95,8 @@ def convertbook():
                 bids[i]['total'] = bidTotal
                 if bidTotal > maxtotal:
                     maxtotal = bidTotal
+                if bids[i]['amount'] > maxvolume:
+                    maxvolume = bids[i]['amount']
 
             datum = {
                 'time': bin['localtime'],
@@ -102,7 +107,8 @@ def convertbook():
         out = json.dumps({
             'extent': [minprice, maxprice],
             'book': sorted(book, key=lambda e: e['time']),
-            'maxtotal': maxtotal
+            'maxtotal': maxtotal,
+            'maxvolume': maxvolume
         })
         with open('static/processed_book.json',"w") as o:
             o.write(out)
